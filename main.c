@@ -1,8 +1,8 @@
 #include "joias.h"
 
-/*
-gcc -Wall -Wextra -g3 main.c joias.c -o main.exe
-*/
+
+//gcc -Wall -Wextra -g3 main.c joias.c -o main.exe
+// /"
 
 
 void mostrar_menu() {
@@ -29,21 +29,21 @@ void mostrar_menu() {
 
 void processar_csv() {
     printf("\n=== PROCESSANDO ARQUIVO CSV ===\n");
-    
+
     // processa joias
     printf("Processando joias...\n");
     int joias_inseridas = inserir_joias_do_csv("jewelry.csv", "joias.dat");
     if (joias_inseridas > 0) {
         printf("%d joias processadas com sucesso!\n", joias_inseridas);
     }
-    
+
     // processa compras
     printf("\nProcessando compras...\n");
     int compras_inseridas = inserir_compras_do_csv("jewelry.csv", "compras.dat");
     if (compras_inseridas > 0) {
         printf("%d compras processadas com sucesso!\n", compras_inseridas);
     }
-    
+
     printf("\n=== ARQUIVOS CRIADOS ===\n");
     printf("- joias.dat (arquivo de dados das joias)\n");
     printf("- compras.dat (arquivo de dados das compras)\n");
@@ -52,19 +52,19 @@ void processar_csv() {
 
 void criar_indices() {
     printf("\n=== CRIANDO INDICES ===\n");
-    
+
     printf("Criando indice para joias...\n");
     int indice_joias = criar_indice_joias("joias.dat", "joias.idx");
     if (indice_joias > 0) {
         printf("Indice de joias criado com %d entradas!\n", indice_joias);
     }
-    
+
     printf("Criando indice para compras...\n");
     int indice_compras = criar_indice_compras("compras.dat", "compras.idx");
     if (indice_compras > 0) {
         printf("Indice de compras criado com %d entradas!\n", indice_compras);
     }
-    
+
     printf("\n=== INDICES CRIADOS ===\n");
     printf("- joias.idx (indice do arquivo de joias)\n");
     printf("- compras.idx (indice do arquivo de compras)\n");
@@ -74,93 +74,101 @@ void criar_indices() {
 int main() {
     int opcao;
     long long id;
-    
+    long long chave;
+    long idx;
     printf("=== SISTEMA INICIANDO ===\n");
-    
+
     do {
         mostrar_menu();
         scanf("%d", &opcao);
-        
+
         switch (opcao) {
             case 1:
                 processar_csv();
                 break;
-                
+
             case 2:
                 mostrar_joias("joias.dat");
                 break;
-                
+
             case 3:
                 mostrar_compras("compras.dat");
                 break;
-                    
+
             case 4:
                 printf("Digite o ID do Produto: ");
                 scanf("%lld", &id);
                 consultar_joia("joias.dat", id);
                 break;
-                
+
             case 5:
                 printf("Digite o ID do Pedido: ");
                 scanf("%lld", &id);
                 consultar_compra("compras.dat", id);
                 break;
-                
+
             case 6:
                 criar_indices();
                 break;
-                
+
             case 7:
-                /*implementar*/
+                printf("Digite o numero do indice: ");
+                scanf("%ld", &idx);
+               chave = pesquisa_por_idx_arqInd("joias.idx", idx);
+                printf("%lld", chave);
                 break;
-                
+
             case 8:
-                /*implementar*/
+                printf("Digite o numero do indice: ");
+                scanf("%ld", &idx);
+                chave = pesquisa_por_idx_arqInd("compras.idx", idx);
+                printf("%lld", chave);
                 break;
-                
+
             case 9:
                 /*implementar*/
                 break;
-                
+
             case 10:
-                /*implementar*/
+                inserir_joia_ordenada("joias.dat", "joias.idx");
                 break;
-                
+
             case 11:
-                /*implementar*/
-                break;
-                
+                remove_joia("joias.dat", "joias.idx");
+
+                break; 
+
             case 12:
-                /*implementar*/
+                inserir_compra_ordenada("compras.dat", "compras.idx");
                 break;
-                
+
             case 13:
-                /*implementar*/
+                remove_compra("compras.dat", "compras.idx");
                 break;
-                
+
             case 14:
                 mostrar_indice_joias("joias.idx");
                 break;
-                
+
             case 15:
                 mostrar_indice_compras("compras.idx");
                 break;
-                
+
             case 0:
                 printf("Saindo do sistema...\n");
                 break;
-                
+
             default:
                 printf("Opcao invalida! Tente novamente.\n");
         }
-        
+
         if (opcao != 0) {
             printf("\nPressione Enter para continuar...");
             getchar();
             getchar();
         }
-        
+
     } while (opcao != 0);
-    
+
     return 0;
 }

@@ -639,3 +639,418 @@ void mostrar_indice_compras(const char* arquivo_indice) {
     fclose(indice);
     printf("\nTotal de entradas no indice: %d\n", contador);
 }
+
+long long pesquisa_por_idx_arqInd(const char* arquivo_indice, long idx) {
+    FILE* fp = fopen(arquivo_indice, "rb");
+    if (!fp) {
+        printf("Erro ao abrir arquivo de índice: %s\n", arquivo_indice);
+        return 0;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    long nRegistros = ftell(fp) / sizeof(IndiceParcial);
+    rewind(fp);
+
+    long left = 0, right = nRegistros - 1;
+    IndiceParcial entrada;
+
+    while (left <= right) {
+        long mid = (left + right) / 2;
+
+        fseek(fp, mid * sizeof(IndiceParcial), SEEK_SET);
+        fread(&entrada, sizeof(IndiceParcial), 1, fp);
+
+        if (entrada.posicao == idx) {
+            fclose(fp);
+            return entrada.chave; // achou a chave correspondente
+        } else if (entrada.posicao < idx) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    fclose(fp);
+    return 0; // não encontrado
+}
+
+int inserir_joia_ordenada(const char* arquivo_dados, const char* arquivo_indice) {
+    Joia nova;
+    printf("=== Inserir nova joia ===\n");
+
+    printf("ID do produto (chave única): ");
+    scanf("%lld", &nova.id_produto);
+
+    printf("ID da categoria: ");
+    scanf("%lld", &nova.id_categoria);
+
+    printf("Alias da categoria: ");
+    getchar(); // consumir \n
+    fgets(nova.alias_categoria, TAM_CATEGORIA, stdin);
+    nova.alias_categoria[strcspn(nova.alias_categoria, "\n")] = '\0';
+    preencher_string(nova.alias_categoria, TAM_CATEGORIA);
+
+    printf("ID da marca: ");
+    scanf("%lld", &nova.id_marca);
+
+    printf("Preço: ");
+    scanf("%lf", &nova.preco);
+
+    printf("Gênero (ex: f/m/u): ");
+    getchar();
+    fgets(nova.genero, TAM_GENERO, stdin);
+    nova.genero[strcspn(nova.genero, "\n")] = '\0';
+    preencher_string(nova.genero, TAM_GENERO);
+
+    printf("Cor: ");
+    fgets(nova.cor, TAM_COR, stdin);
+    nova.cor[strcspn(nova.cor, "\n")] = '\0';
+    preencher_string(nova.cor, TAM_COR);
+
+    printf("Material: ");
+    fgets(nova.material, TAM_MATERIAL, stdin);
+    nova.material[strcspn(nova.material, "\n")] = '\0';
+    preencher_string(nova.material, TAM_MATERIAL);
+
+    printf("Pedra preciosa: ");
+    fgets(nova.pedra_preciosa, TAM_GEMSTONE, stdin);
+    nova.pedra_preciosa[strcspn(nova.pedra_preciosa, "\n")] = '\0';
+    preencher_string(nova.pedra_preciosa, TAM_GEMSTONE);
+
+    nova.quebra_linha = '\n';
+
+    // ---------- Ler todas as joias existentes ----------
+    FILE* dados = fopen(arquivo_dados, "rb");
+    if (!dados) {
+        printf("Erro ao abrir arquivo de dados para leitura: %s\n", arquivo_dados);
+        return 0;
+    }
+
+    Joia* joias = NULL;
+    int qtd = 0;
+    int capacidade = 1000;
+    joias = (Joia*)malloc(capacidade * sizeof(Joia));
+    if (!joias) {
+        printf("Erro de memória\n");
+        fclose(dados);
+        return -1;
+    }
+
+    while (fread(&joias[qtd], sizeof(Joia), 1, dados) == 1) {
+        qtd++;
+        if (qtd >= capacidade) {
+            capacidade *= 2;
+            joias = (Joia*)realloc(joias, capacidade * sizeof(Joia));
+            if (!joias) {
+                printf("Erro de memória\n");
+                fclose(dados);
+                return -1;
+            }
+        }
+    }
+    fclose(dados);
+
+    // ---------- Inserir a nova joia no vetor ----------
+    joias = (Joia*)realloc(joias, (qtd + 1) * sizeof(Joia));
+    joias[qtd] = nova;
+    qtd++;
+
+    // Ordenar todas por id_produto
+    ordenar_joias_por_id_produto(joias, qtd);
+
+    // ---------- Regravar o arquivo de dados ordenado ----------
+    FILE* dados_out = fopen(arquivo_dados, "wb");
+    if (!dados_out) {
+        printf("Erro ao regravar arquivo de dados: %s\n", arquivo_dados);
+        free(joias);
+        return -1;
+    }
+
+    for (int i = 0; i < qtd; i++) {
+        fwrite(&joias[i], sizeof(Joia), 1, dados_out);
+    }
+    fclose(dados_out);
+
+    printf("Nova joia inserida e arquivo regravado com %d registros.\n", qtd);
+
+    // ---------- Recriar o índice ----------
+    criar_indice_joias(arquivo_dados, arquivo_indice);
+
+    free(joias);
+    return 0;
+}
+int inserir_compra_ordenada(const char* arquivo_dados, const char* arquivo_indice) {
+    FILE* fp = fopen(arquivo_dados, "rb");
+    if (!fp) {
+        printf("Arquivo %s não encontrado. Criando novo...\n", arquivo_dados);
+        fp = fopen(arquivo_dados, "wb");
+        if (!fp) {
+            printf("Erro ao criar arquivo de dados.\n");
+            return -1;
+        }
+        fclose(fp);
+        fp = fopen(arquivo_dados, "rb");
+    }
+
+    // Carregar todas as compras existentes
+    Compra* compras = NULL;
+    int qtd = 0;
+    Compra temp;
+
+    while (fread(&temp, sizeof(Compra), 1, fp) == 1) {
+        compras = realloc(compras, (qtd + 1) * sizeof(Compra));
+        if (!compras) {
+            printf("Erro de memória.\n");
+            fclose(fp);
+            return -1;
+        }
+        compras[qtd++] = temp;
+    }
+    fclose(fp);
+
+    // Ler nova compra do usuário
+    Compra nova;
+    printf("Digite o ID do pedido: ");
+    scanf("%lld", &nova.id_pedido);
+    printf("Digite o ID do produto: ");
+    scanf("%lld", &nova.id_produto);
+    printf("Digite a quantidade: ");
+    scanf("%d", &nova.quantidade);
+    printf("Digite o ID do usuário: ");
+    scanf("%lld", &nova.id_usuario);
+    printf("Digite a data e hora (ex: 2025-10-21 14:35:00): ");
+    scanf(" %[^\n]", nova.data_hora);
+    nova.quebra_linha = '\n';
+
+    // Inserir no vetor
+    compras = realloc(compras, (qtd + 1) * sizeof(Compra));
+    if (!compras) {
+        printf("Erro de memória.\n");
+        return -1;
+    }
+    compras[qtd++] = nova;
+
+    // Ordenar por id_pedido
+    qsort(compras, qtd, sizeof(Compra), comparar_compras);
+
+    // Regravar o arquivo ordenado
+    fp = fopen(arquivo_dados, "wb");
+    if (!fp) {
+        printf("Erro ao abrir arquivo de dados para escrita.\n");
+        free(compras);
+        return -1;
+    }
+    fwrite(compras, sizeof(Compra), qtd, fp);
+    fclose(fp);
+
+    // Recriar o índice
+    criar_indice_compras(arquivo_dados, arquivo_indice); // usa a mesma lógica do joias
+
+    free(compras);
+    printf("Compra inserida com sucesso e arquivo %s reordenado.\n", arquivo_dados);
+    return 0;
+}
+int remove_compra(const char* arquivo_dados, const char* arquivo_indice) {
+    long long id_busca;
+    printf("Digite o ID do pedido que deseja remover: ");
+    scanf("%lld", &id_busca);
+
+    // 1️⃣ Abrir o arquivo de índice
+    FILE* idx = fopen(arquivo_indice, "rb");
+    if (!idx) {
+        printf("Erro ao abrir o arquivo de índice.\n");
+        return -1;
+    }
+
+    // 2️⃣ Procurar a chave no índice
+    IndiceParcial entrada;
+    long posicao_dado = -1;
+    long qtd_indices = 0;
+    while (fread(&entrada, sizeof(IndiceParcial), 1, idx) == 1) {
+        if (entrada.chave == id_busca) {
+            posicao_dado = entrada.posicao;
+        }
+        qtd_indices++;
+    }
+    fclose(idx);
+
+    if (posicao_dado == -1) {
+        printf("ID %lld não encontrado no índice.\n", id_busca);
+        return 0;
+    }
+
+    // 3️⃣ Abrir o arquivo de dados e marcar como "removido"
+    FILE* dados = fopen(arquivo_dados, "r+b");
+    if (!dados) {
+        printf("Erro ao abrir o arquivo de dados.\n");
+        return -1;
+    }
+
+    fseek(dados, posicao_dado * sizeof(Compra), SEEK_SET);
+    Compra removida;
+
+    // Ler o registro atual
+    if (fread(&removida, sizeof(Compra), 1, dados) != 1) {
+        printf("Erro ao ler registro para remoção.\n");
+        fclose(dados);
+        return -1;
+    }
+
+    // Marcar como "nulo"
+    removida.id_pedido = -1;
+    removida.id_produto = -1;
+    removida.id_usuario = -1;
+    removida.quantidade = 0;
+    strcpy(removida.data_hora, "REMOVIDO");
+    removida.quebra_linha = '\n';
+
+    // Voltar o ponteiro e regravar
+    fseek(dados, posicao_dado * sizeof(Compra), SEEK_SET);
+    fwrite(&removida, sizeof(Compra), 1, dados);
+    fclose(dados);
+
+    printf("Registro ID %lld marcado como removido.\n", id_busca);
+
+    // 4️⃣ Remover a entrada do índice
+    idx = fopen(arquivo_indice, "rb");
+    if (!idx) {
+        printf("Erro ao reabrir o arquivo de índice.\n");
+        return -1;
+    }
+
+    IndiceParcial* indices = malloc(qtd_indices * sizeof(IndiceParcial));
+    if (!indices) {
+        printf("Erro de memória.\n");
+        fclose(idx);
+        return -1;
+    }
+
+    fread(indices, sizeof(IndiceParcial), qtd_indices, idx);
+    fclose(idx);
+
+    // Filtrar (sem reordenar)
+    FILE* idx_novo = fopen(arquivo_indice, "wb");
+    if (!idx_novo) {
+        printf("Erro ao reabrir arquivo de índice para escrita.\n");
+        free(indices);
+        return -1;
+    }
+
+    for (long i = 0; i < qtd_indices; i++) {
+        if (indices[i].chave != id_busca) {
+            fwrite(&indices[i], sizeof(IndiceParcial), 1, idx_novo);
+        }
+    }
+
+    fclose(idx_novo);
+    free(indices);
+
+    printf("Entrada removida do índice com sucesso.\n");
+    return 1;
+}
+int remove_joia(const char* arquivo_dados, const char* arquivo_indice) {
+    long long id_busca;
+    printf("Digite o ID do produto que deseja remover: ");
+    scanf("%lld", &id_busca);
+
+    // 1️⃣ Abrir o arquivo de índice
+    FILE* idx = fopen(arquivo_indice, "rb");
+    if (!idx) {
+        printf("Erro ao abrir o arquivo de índice.\n");
+        return -1;
+    }
+
+    IndiceParcial entrada;
+    long posicao_dado = -1;
+    long qtd_indices = 0;
+
+    // 2️⃣ Procurar a chave no índice
+    while (fread(&entrada, sizeof(IndiceParcial), 1, idx) == 1) {
+        if (entrada.chave == id_busca) {
+            posicao_dado = entrada.posicao;
+        }
+        qtd_indices++;
+    }
+    fclose(idx);
+
+    if (posicao_dado == -1) {
+        printf("ID %lld não encontrado no índice.\n", id_busca);
+        return 0;
+    }
+
+    // 3️⃣ Abrir o arquivo de dados e marcar como "removido"
+    FILE* dados = fopen(arquivo_dados, "r+b");
+    if (!dados) {
+        printf("Erro ao abrir o arquivo de dados.\n");
+        return -1;
+    }
+
+    fseek(dados, posicao_dado * sizeof(Joia), SEEK_SET);
+    Joia removida;
+
+    if (fread(&removida, sizeof(Joia), 1, dados) != 1) {
+        printf("Erro ao ler registro para remoção.\n");
+        fclose(dados);
+        return -1;
+    }
+
+    // 4️⃣ Marcar campos como "REMOVIDO"
+    removida.id_produto = -1;
+    removida.id_categoria = -1;
+    removida.id_marca = -1;
+    removida.preco = 0.0;
+    strcpy(removida.alias_categoria, "REMOVIDO");
+    strcpy(removida.genero, "");
+    strcpy(removida.cor, "");
+    strcpy(removida.material, "");
+    strcpy(removida.pedra_preciosa, "");
+    removida.quebra_linha = '\n';
+
+    // Voltar o ponteiro e regravar
+    fseek(dados, posicao_dado * sizeof(Joia), SEEK_SET);
+    fwrite(&removida, sizeof(Joia), 1, dados);
+    fclose(dados);
+
+    printf("Registro ID %lld marcado como removido no arquivo de dados.\n", id_busca);
+
+    // 5️⃣ Remover a entrada do índice
+    idx = fopen(arquivo_indice, "rb");
+    if (!idx) {
+        printf("Erro ao reabrir o arquivo de índice.\n");
+        return -1;
+    }
+
+    IndiceParcial* indices = malloc(qtd_indices * sizeof(IndiceParcial));
+    if (!indices) {
+        printf("Erro de memória.\n");
+        fclose(idx);
+        return -1;
+    }
+
+    fread(indices, sizeof(IndiceParcial), qtd_indices, idx);
+    fclose(idx);
+
+    FILE* idx_novo = fopen(arquivo_indice, "wb");
+    if (!idx_novo) {
+        printf("Erro ao reabrir o arquivo de índice para escrita.\n");
+        free(indices);
+        return -1;
+    }
+
+    for (long i = 0; i < qtd_indices; i++) {
+        if (indices[i].chave != id_busca) {
+            fwrite(&indices[i], sizeof(IndiceParcial), 1, idx_novo);
+        }
+    }
+
+    fclose(idx_novo);
+    free(indices);
+
+    printf("Entrada removida do índice com sucesso.\n");
+    return 1;
+}
+
+
+
+
+
