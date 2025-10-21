@@ -1036,8 +1036,3 @@ int remove_joia(const char* arquivo_dados, const char* arquivo_indice) {
     printf("Entrada removida do índice com sucesso.\n");
     return 1;
 }
-
-
-
-
-
