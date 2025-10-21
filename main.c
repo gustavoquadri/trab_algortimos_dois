@@ -5,7 +5,7 @@ gcc -Wall -Wextra -g3 main.c joias.c -o main.exe
 */
 
 
-void mostrar_menu() {
+void mostrar_menu(){
     printf("\n=== MENU DO SISTEMA ===\n");
     printf("1. Processar arquivo CSV e criar arquivos de dados\n");
     printf("2. Mostrar joias\n");
@@ -27,20 +27,18 @@ void mostrar_menu() {
 }
 
 
-void processar_csv() {
+void processar_csv(){
     printf("\n=== PROCESSANDO ARQUIVO CSV ===\n");
     
-    // processa joias
     printf("Processando joias...\n");
     int joias_inseridas = inserir_joias_do_csv("jewelry.csv", "joias.dat");
-    if (joias_inseridas > 0) {
+    if(joias_inseridas > 0){
         printf("%d joias processadas com sucesso!\n", joias_inseridas);
     }
     
-    // processa compras
     printf("\nProcessando compras...\n");
     int compras_inseridas = inserir_compras_do_csv("jewelry.csv", "compras.dat");
-    if (compras_inseridas > 0) {
+    if(compras_inseridas > 0){
         printf("%d compras processadas com sucesso!\n", compras_inseridas);
     }
     
@@ -50,18 +48,18 @@ void processar_csv() {
 }
 
 
-void criar_indices() {
+void criar_indices(){
     printf("\n=== CRIANDO INDICES ===\n");
     
     printf("Criando indice para joias...\n");
     int indice_joias = criar_indice_joias("joias.dat", "joias.idx");
-    if (indice_joias > 0) {
+    if(indice_joias > 0){
         printf("Indice de joias criado com %d entradas!\n", indice_joias);
     }
     
     printf("Criando indice para compras...\n");
     int indice_compras = criar_indice_compras("compras.dat", "compras.idx");
-    if (indice_compras > 0) {
+    if(indice_compras > 0){
         printf("Indice de compras criado com %d entradas!\n", indice_compras);
     }
     
@@ -71,17 +69,17 @@ void criar_indices() {
 }
 
 
-int main() {
+int main(){
     int opcao;
     long long id;
     
     printf("=== SISTEMA INICIANDO ===\n");
     
-    do {
+    do{
         mostrar_menu();
         scanf("%d", &opcao);
         
-        switch (opcao) {
+        switch(opcao){
             case 1:
                 processar_csv();
                 break;
@@ -154,13 +152,13 @@ int main() {
                 printf("Opcao invalida! Tente novamente.\n");
         }
         
-        if (opcao != 0) {
+        if(opcao != 0){
             printf("\nPressione Enter para continuar...");
             getchar();
             getchar();
         }
         
-    } while (opcao != 0);
+    }while(opcao != 0);
     
     return 0;
 }
