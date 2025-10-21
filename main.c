@@ -15,13 +15,12 @@ void mostrar_menu(){
     printf("6. Criar indices\n");
     printf("7. Buscar joia usando indice\n");
     printf("8. Buscar compra usando indice\n");
-    printf("9. Consultas especiais\n");
-    printf("10. Inserir nova joia\n");
-    printf("11. Remover joia\n");
-    printf("12. Inserir nova compra\n");
-    printf("13. Remover compra\n");
-    printf("14. Mostrar indice de joias\n");
-    printf("15. Mostrar indice de compras\n");
+    printf("9. Inserir nova joia\n");
+    printf("10. Remover joia\n");
+    printf("11. Inserir nova compra\n");
+    printf("12. Remover compra\n");
+    printf("13. Mostrar indice de joias\n");
+    printf("14. Mostrar indice de compras\n");
     printf("0. Sair\n");
     printf("Escolha uma opcao: ");
 }
@@ -122,31 +121,26 @@ int main(){
                 break;
 
             case 9:
-                /*implementar*/
-                break;
-
-            case 10:
                 inserir_joia_ordenada("joias.dat", "joias.idx");
                 break;
 
-            case 11:
+            case 10:
                 remove_joia("joias.dat", "joias.idx");
-
                 break; 
 
-            case 12:
+            case 11:
                 inserir_compra_ordenada("compras.dat", "compras.idx");
                 break;
 
-            case 13:
+            case 12:
                 remove_compra("compras.dat", "compras.idx");
                 break;
 
-            case 14:
+            case 13:
                 mostrar_indice_joias("joias.idx");
                 break;
 
-            case 15:
+            case 14:
                 mostrar_indice_compras("compras.idx");
                 break;
 
