@@ -70,5 +70,12 @@ int comparar_indices(const void* a, const void* b);
 // funcoes para visualizar indices
 void mostrar_indice_joias(const char* arquivo_indice);
 void mostrar_indice_compras(const char* arquivo_indice);
-
+// funcoes para pesquisar por indices
+long long pesquisa_por_idx_arqInd(const char* arquivo_indice,long idx);
+// insercoes 
+int inserir_joia_ordenada(const char* arquivo_dados, const char* arquivo_indice);
+int inserir_compra_ordenada(const char* arquivo_dados, const char* arquivo_indice);
+//remocoes 
+int remove_compra(const char* arquivo_dados, const char* arquivo_indice);
+int remove_joia(const char* arquivo_dados, const char* arquivo_indice);
 #endif
