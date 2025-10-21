@@ -14,7 +14,7 @@
 #define TAM_TIMESTAMP 30
 
 // estrutura para joias
-typedef struct {
+typedef struct{
     long long id_produto;
     long long id_categoria;
     char alias_categoria[TAM_CATEGORIA];
@@ -28,7 +28,7 @@ typedef struct {
 } Joia;
 
 // estrutura para compras
-typedef struct {
+typedef struct{
     long long id_pedido;
     long long id_produto;
     int quantidade;
@@ -38,7 +38,7 @@ typedef struct {
 } Compra;
 
 // estrutura para indice parcial
-typedef struct {
+typedef struct{
     long long chave;
     long posicao;
 } IndiceParcial;
